@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
 
     //// Game
     IGame game;
+    public GameType gameType;
     //// GameRenderer
     public Drawer drawer;
     //// UI
@@ -20,7 +21,8 @@ public class GameManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        mDebug.Log("Starting GameManager...");
+        //gameType = GameType.MapGen;
+        mDebug.Log("Starting GameManager with GameType" + gameType.ToString() +"...");
         game = new Game(this);
         drawer.game = game;
         inputHandler.game = game;
@@ -31,14 +33,11 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        game.TakeTurn();
         drawer.DrawMap();
         drawer.InitCamera();
         bool needsUiUpdate = inputHandler.HandleUserInput();
-        //if (game.turnNumber == 0)
-        //{
-        //    game.turnNumber++;
-        //    drawer.DrawInit();
-        //}
+        
         //drawer.Animate();
         //if (NeedsUpdate())
         //{

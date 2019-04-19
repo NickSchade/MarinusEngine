@@ -82,6 +82,7 @@ public class MapGen
         bench.WriteBenchmarkToDebug();
         outerBench.EndBenchmark("Entire Gen");
         outerBench.WriteBenchmarkToDebug();
+        mDebug.Log("percentSea = " + percentSea);
     }
     public void ApplyPreferencesWaterBody()
     {
@@ -145,7 +146,7 @@ public class MapGen
         SetFertility();
         SetHarbor();
         SetLands();
-        PaintRegions();
+        //PaintRegions();
     }
     public void ErosionStep()
     {

@@ -4,6 +4,15 @@ using UnityEngine;
 
 public static class Colors
 {
+
+    public static Color GetColorLerp(float value, Color cLower, Color cUpper)
+    {
+        float r = Mathf.Lerp(cLower.r, cUpper.r, value);
+        float g = Mathf.Lerp(cLower.g, cUpper.g, value);
+        float b = Mathf.Lerp(cLower.b, cUpper.b, value);
+        Color C = new Color(r, g, b);
+        return C;
+    }
     public static Color[] staticColors = ColorListProcedural(200);
     public static Color[] ColorListManual()
     {

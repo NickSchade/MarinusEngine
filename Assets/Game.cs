@@ -7,10 +7,10 @@ public interface IGame
 {
     TileShape tileShape { get; set; }
     Map map { get; set; }
+    int tick { get; set; }
 
     bool HandleClick(Pos pos, bool leftClick, bool rightClick);
-
-    Dictionary<Pos, ILocation> MakeLocations(Map map);
+    void TakeTurn();
     
 }
 
@@ -19,6 +19,14 @@ public class Game: IGame
     public TileShape tileShape { get; set; }
     public Map map { get; set; }
     public GameManager gameManager;
+    public int tick { get; set; }
+
+
+    int dim = 100;
+    bool wrapEastWest = false;
+    bool wrapNorthSouth = false;
+    float percentSea = 0.75f;
+    float percentRiver = 0.20f;
 
     public Color[] regionColors;
     public Game(GameManager _gameManager)
@@ -28,44 +36,131 @@ public class Game: IGame
     }
     public void Initialize(GameManager _gameManager)
     {
-        gameManager = _gameManager;
-        int dim = 50;
         int xDim = dim;
         int yDim = dim;
-        bool wrapEastWest = false;
-        bool wrapNorthSouth = false;
+        gameManager = _gameManager;
+        tick = 0;
         map = new Map(this, xDim, yDim, wrapEastWest, wrapNorthSouth);
-        map.lands = MakeLocations(map);
+        map.lands = MakeLocations(map, gameManager.gameType);
     }
 
     public bool HandleClick(Pos pos, bool leftClick, bool rightClick)
     {
-        //mDebug.Log("In Game.HandleClick(), clicked on " + pos.getName());
-        //mDebug.Log("It's neighbors are " + pos.listNeighbors());
-        map.lands[pos].GetColor();
+        map.lands[pos].Click();
         return true;
     }
 
-    public Dictionary<Pos, ILocation> MakeLocations(Map map)
+    public void TakeTurn()
     {
-        int xDim = map.xDim;
-        int yDim = map.yDim;
+        tick++;
+        foreach (ILocation loc in map.lands.Values)
+        {
+            loc.TakeTurn();
+        }
+    }
+
+    public Dictionary<Pos, ILocation> MakeLocations(Map map, GameType gameType)
+    {
+        if (gameType == GameType.HomelandsOrganic)
+        {
+            return MakeLocationsForHomelandsOrganic(map);
+        }
+        else if (gameType == GameType.MapGenPaintedRegions)
+        {
+            return MakeLocationsForMapGenPaintedRegions(map);
+        }
+        else if (gameType == GameType.MapGenBiomeColors)
+        {
+            return MakeLocationsForMapGenBiomeColors(map);
+        }
+        else
+        {
+            return MakeLocationsForMapGenPaintedRegions(map);
+        }
+    }
+    public Dictionary<Pos, ILocation> MakeLocationsForMapGenPaintedRegions(Map map)
+    {
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
 
-        MapGen mapGen = new MapGen(xDim, yDim);
+        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea:percentSea, _percentRiver:percentRiver);
         mapGen.GenerateMap();
-        for (int x = 0; x < xDim; x++)
+        mapGen.PaintRegions();
+        for (int x = 0; x < map.xDim; x++)
         {
-            for (int y = 0; y < yDim; y++)
+            for (int y = 0; y < map.yDim; y++)
             {
                 Pos p = map.pathMap[new Loc(x, y).key()];
-                locations[p] = new LocationExodus(mapGen.GetLocationQualities(x, y));
+                locations[p] = new LocationMapGenPainted(mapGen.GetLocationQualities(x, y));
+            }
+        }
+
+        return locations;
+    }
+    public Dictionary<Pos, ILocation> MakeLocationsForMapGenBiomeColors(Map map)
+    {
+        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
+
+        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
+        mapGen.GenerateMap();
+
+        for (int x = 0; x < map.xDim; x++)
+        {
+            for (int y = 0; y < map.yDim; y++)
+            {
+                Pos p = map.pathMap[new Loc(x, y).key()];
+                Color c = ColorBiome(mapGen, x, y);
+                locations[p] = new LocationMapGenBiomeColor(c);
+            }
+        }
+
+        return locations;
+    }
+    Color ColorBiome(MapGen mapGen, int x, int y)
+    {
+        float r = mapGen.WaterFlux[x, y];
+        float t = mapGen.Temperature[x, y];
+        float e = mapGen.Elevation[x, y];
+        Color orange = MapColor.GetColorLerp(0.5f, Color.red, Color.yellow);
+        Color cr = MapColor.GetColorLerp(r, orange, Color.green);
+        Color ct = MapColor.GetColorLerp(t, Color.black, Color.white);
+        Color c = MapColor.GetColorLerp(0.5f, cr, ct);
+        c = e < mapGen.seaLevel ? Color.blue : c;
+        c = (mapGen.Temperature[x, y] < mapGen.iceLevel) ? Color.white : c;
+        c = (mapGen.WaterFlux[x, y] > mapGen.riverLevel) && e > mapGen.seaLevel ? MapColor.GetColorLerp(0.5f, Color.blue, Color.cyan) : c;
+        return c;
+
+    }
+    public Dictionary<Pos, ILocation> MakeLocationsForHomelandsOrganic(Map map, float pow = 2f)
+    {
+        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
+
+        ElevationBuilder elevationBuilder = new ElevationBuilder(MapUtil.nFromDims(map.xDim, map.yDim));
+        elevationBuilder.SetElevationWithMidpointDisplacement(1);
+        //elevationBuilder.TrimToDimensions(xDim, yDim);
+
+        float[,] resources = elevationBuilder.Elevation;
+        MapUtil.TransformMap(ref resources, MapUtil.dExponentiate, pow);
+        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver );
+        mapGen.GenerateMap();
+        for (int x = 0; x < map.xDim; x++)
+        {
+            for (int y = 0; y < map.yDim; y++)
+            {
+                Pos p = map.pathMap[new Loc(x, y).key()];
+                bool isLand = mapGen.Elevation[x, y] < mapGen.seaLevel ? false : true;
+                float startingValue = resources[x, y];
+                locations[p] = new LocationHomelandsOrganic(this, isLand, startingValue);
             }
         }
 
         return locations;
     }
 }
+
+
+
+public enum GameType { MapGenPaintedRegions, MapGenBiomeColors, HomelandsOrganic}
+
 
 public static class mDebug
 {
@@ -128,20 +223,90 @@ public enum TileShape { SQUARE, HEX};
 public interface ILocation
 {
     Color GetColor();
+    void TakeTurn();
+    void Click();
 }
 
-public class LocationExodus : ILocation
+public class LocationHomelandsOrganic : ILocation
 {
-    Dictionary<string, float> qualities;
-    public LocationExodus(Dictionary<string,float> _qualities)
+    float resourceValue;
+    bool isLand;
+    float maxResource = 1f;
+    float resourcePerTurn = 0.0001f;
+    float resourcePow = 0.99f;//0.9999f;//0.99999f;
+    bool isVisible = true;
+    Game game;
+    public LocationHomelandsOrganic(Game _game, bool _isLand, float _startingResourceValue)
     {
-        qualities = _qualities;
+        game = _game;
+        isLand = _isLand;
+        resourceValue = _startingResourceValue;
+    }
+    public void TakeTurn()
+    {
+        if (resourceValue < maxResource)
+        {
+            //resourceValue += resourcePerTurn;
+            resourceValue = Mathf.Pow(resourceValue, resourcePow);
+        }
+        else if (resourceValue > maxResource)
+        {
+            resourceValue = maxResource;
+        }
     }
     public Color GetColor()
     {
+        if (isVisible)
+        {
+            if (isLand)
+            {
+                return Colors.OceanBlue;
+            }
+            else
+            {
+                mDebug.Log("resourceValue = " + resourceValue, false);
+                //float x = Mathf.Round(resourceValue * 10) / 10f;
+                float x = resourceValue;
+                return Colors.GetColorLerp(x / maxResource, Color.white, Color.black);
+            }
+        }
+        else
+        {
+            return Color.black;
+        }
+    }
+
+    public void Click()
+    {
+        isVisible = !isVisible;
+    }
+}
+
+public abstract class LocationMapGen : ILocation
+{
+    public abstract Color GetColor();
+    public void TakeTurn()
+    {
+
+    }
+    public void Click()
+    {
+
+    }
+}
+
+public class LocationMapGenPainted : LocationMapGen, ILocation
+{
+    public Dictionary<string, float> qualities;
+    public LocationMapGenPainted(Dictionary<string, float> _qualities)
+    {
+        qualities = _qualities; 
+    }
+    public override Color GetColor()
+    {
         string Category = "Regions";
         float value = qualities[Category];
-        Color c = GetColorLerp(value, Color.blue, Color.green);
+        Color c = Colors.GetColorLerp(value, Color.blue, Color.green);
         if (Category == "Regions")
         {
             if (value == 0f)
@@ -155,16 +320,24 @@ public class LocationExodus : ILocation
         }
         mDebug.Log(Category + " value is " + value + " and color is " + c);
         return c;
-        
+
     }
-    static public Color GetColorLerp(float value, Color cLower, Color cUpper)
+
+}
+
+public class LocationMapGenBiomeColor : LocationMapGen, ILocation
+{
+    Color color;
+    public LocationMapGenBiomeColor(Color c) 
     {
-        float r = Mathf.Lerp(cLower.r, cUpper.r, value);
-        float g = Mathf.Lerp(cLower.g, cUpper.g, value);
-        float b = Mathf.Lerp(cLower.b, cUpper.b, value);
-        Color C = new Color(r, g, b);
-        return C;
+        color = c;
     }
+    public override Color GetColor()
+    {
+        return color;
+
+    }
+
 }
 
 
