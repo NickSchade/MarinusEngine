@@ -82,7 +82,7 @@ public class MapGen
         bench.WriteBenchmarkToDebug();
         outerBench.EndBenchmark("Entire Gen");
         outerBench.WriteBenchmarkToDebug();
-        mDebug.Log("percentSea = " + percentSea);
+        mDebug.Log("percentSea = " + percentSea, false);
     }
     public void ApplyPreferencesWaterBody()
     {
@@ -92,7 +92,7 @@ public class MapGen
     }
     public void CreateElevation()
     {
-        Debug.Log("Creating Elevation of Dimensions [" + xDim + "," + yDim + "]");
+        //Debug.Log("Creating Elevation of Dimensions [" + xDim + "," + yDim + "]");
         elevationBuilder = new ElevationBuilder(MapUtil.nFromDims(xDim, yDim));
         elevationBuilder.SetElevationWithMidpointDisplacement(iExpand, bench: bench);
         //elevationBuilder.TrimToDimensions(xDim, yDim);
@@ -100,7 +100,7 @@ public class MapGen
 
         xDim = Elevation.GetLength(0);
         yDim = Elevation.GetLength(1);
-        Debug.Log("Creating Elevation of Dimensions [" + xDim + "," + yDim + "]");
+        //Debug.Log("Creating Elevation of Dimensions [" + xDim + "," + yDim + "]");
         WaterFlux = new float[xDim, yDim];
         Rain = new float[xDim, yDim];
         Temperature = new float[xDim, yDim];
@@ -257,6 +257,8 @@ public class MapGen
         qualities["Fertility"] = Fertility[x, y];
         qualities["Harbor"] = Harbor[x, y];
         qualities["Land"] = Land[x, y];
+        qualities["Longitude"] = x;
+        qualities["Latitude"] = y;
 
         return qualities;
     }
@@ -2431,12 +2433,15 @@ public class Benchmark
         BenchLines.Add("");
         return BenchLines;
     }
-    public void WriteBenchmarkToDebug()
+    public void WriteBenchmarkToDebug(bool run = false)
     {
-        List<string> tlines = BenchmarkText();
-        foreach (string t in tlines)
+        if (run)
         {
-            Debug.Log(t);
+            List<string> tlines = BenchmarkText();
+            foreach (string t in tlines)
+            {
+                Debug.Log(t);
+            }
         }
     }
     public string FormatTimespan(TimeSpan ts)

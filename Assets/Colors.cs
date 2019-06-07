@@ -18,6 +18,14 @@ public static class Colors
     {
         return new Color[] {
             OceanBlue,
+            PersianRed,
+            OrangeCrayola,
+            SpanishYellow,
+            GreenCrayola,
+            TealBlue,
+            Blueberry,
+            ElectricIndigo,
+            RussianViolet,
             AbsoluteZero,
             Acajou,
             AcidGreen,

@@ -16,14 +16,15 @@ public class GameManager : MonoBehaviour
     public InputHandler inputHandler;
 
     // Constants
-
+    public int dim;
 
     // Use this for initialization
     void Start()
     {
         //gameType = GameType.MapGen;
         mDebug.Log("Starting GameManager with GameType" + gameType.ToString() +"...");
-        game = new Game(this);
+        //game = new Game(this);
+        game = new ExodusGame(this);
         drawer.game = game;
         inputHandler.game = game;
     }
@@ -33,6 +34,10 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (game == null)
+        {
+            mDebug.Log("Game is null");
+        }
         game.TakeTurn();
         drawer.DrawMap();
         drawer.InitCamera();

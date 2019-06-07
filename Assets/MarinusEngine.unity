@@ -141,9 +141,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b90fd3faec5a094448e123a27c64541c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameType: 1
+  gameType: 5
   drawer: {fileID: 1114685551}
   inputHandler: {fileID: 1790593520}
+  dim: 25
 --- !u!4 &964551889
 Transform:
   m_ObjectHideFlags: 0

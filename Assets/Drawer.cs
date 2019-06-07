@@ -30,7 +30,8 @@ public class Drawer : MonoBehaviour {
             foreach (string k in game.map.pathMap.Keys)
             {
                 Pos p = game.map.pathMap[k];
-                Color c = game.map.lands[game.map.pathMap[p.mapLoc.key()]].GetColor();
+                Color c = Color.magenta; // debug color
+                c = game.map.lands[p].GetColor();
                 if (!goMap.ContainsKey(p))
                 {
                     goMap[p] = InstantiateGo(pfTile, p.mapLoc, c);
