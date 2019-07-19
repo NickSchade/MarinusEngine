@@ -10,9 +10,8 @@ public class Clustering
     public int[] ClusterKMeans(float[][] Data,
         ClusterNumberIdentificationType type, int DefaultK, int MaxK)
     {
-
         int bestK = IdentifyOptimalClusterNumber(Data, type, DefaultK, MaxK);
-        mDebug.Log("Best # of Clusters is " + bestK);
+        mDebug.Log("Best # of Clusters is " + bestK, false);
         float[][] InitCentroids = KMeansInitKZZ(Data, bestK);
         int[] KClass = KMeansClassification(Data, InitCentroids, 2);
         return KClass;

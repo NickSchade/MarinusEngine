@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         //gameType = GameType.MapGen;
-        mDebug.Log("Starting GameManager with GameType" + gameType.ToString() +"...");
+        mDebug.Log("Starting GameManager with GameType " + gameType.ToString() +"...");
         //game = new Game(this);
         game = new ExodusGame(this);
         drawer.game = game;

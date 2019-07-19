@@ -25,15 +25,23 @@ public static class LocationsMaker
         }
         else if (gameType == GameType.ExodusBiomeFromNoise)
         {
-            return MakeLocationsForExodusBiomeFromNoise(game, percentSea, percentRiver, (int)numCats);
+            return MakeLocationsForExodusBiomeFromNoise((ExodusGame)game, percentSea, percentRiver, (int)numCats);
         }
         else if (gameType == GameType.ExodusBiomeFromClusters)
         {
-            return MakeLocationsForExodusBiomeFromClustering(game, percentSea, percentRiver, (int)numCats);
+            return MakeLocationsForExodusBiomeFromClustering((ExodusGame)game, percentSea, percentRiver, (int)numCats);
+        }
+        else if (gameType == GameType.MapGenPaintedRegions)
+        {
+            return MakeLocationsForMapGenPaintedRegions(game.map, percentSea, percentRiver);
+        }
+        else if (gameType == GameType.ExodusGame)
+        {
+            return MakeLocationsForExodus((ExodusGame)game, percentSea, percentRiver, (int)numCats);
         }
         else
         {
-            return MakeLocationsForMapGenPaintedRegions(game.map, percentSea, percentRiver);
+            throw new System.Exception("GameType not implemented in LocationMaker"); 
         }
     }
     public static Dictionary<Pos, ILocation> MakeLocationsForBiomeFromManual(IMap map, float percentSea, float percentRiver, float numCats)
@@ -55,7 +63,7 @@ public static class LocationsMaker
 
         return locations;
     }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromNoise(IGame game, float percentSea, float percentRiver, int numCats)
+    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromNoise(ExodusGame game, float percentSea, float percentRiver, int numCats)
     {
         IMap map = game.map;
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
@@ -100,7 +108,7 @@ public static class LocationsMaker
 
         return locations;
     }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromClustering(IGame game, float percentSea, float percentRiver, int numCats, float cutoff = 0.9f)
+    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromClustering(ExodusGame game, float percentSea, float percentRiver, int numCats, float cutoff = 0.9f)
     {
         IMap map = game.map;
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
@@ -125,6 +133,28 @@ public static class LocationsMaker
 
         return locations;
     }
+    public static Dictionary<Pos, ILocation> MakeLocationsForExodus(ExodusGame game, float percentSea, float percentRiver, int numCats, float cutoff = 0.9f)
+    {
+        IMap map = game.map;
+        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
+
+        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
+        mapGen.GenerateMap();
+
+        for (int x = 0; x < map.xDim; x++)
+        {
+            for (int y = 0; y < map.yDim; y++)
+            {
+                Pos p = map.pathMap[new Loc(x, y).key()];
+                Dictionary<string, float> qualities = mapGen.GetLocationQualities(x, y);
+                locations[p] = new ExodusLocation(p, new float[numCats], game, qualities);
+            }
+        }
+
+        return locations;
+    }
+
+
 
     public static Dictionary<Pos, ILocation> MakeLocationsForMapGenPaintedRegions(IMap map, float percentSea, float percentRiver)
     {

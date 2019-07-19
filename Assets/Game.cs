@@ -26,7 +26,6 @@ public interface IGame
 
     bool HandleClick(Pos pos, bool leftClick, bool rightClick);
     void TakeTurn();
-    
 }
 
 public class Game: IGame
@@ -78,7 +77,7 @@ public class Game: IGame
 
 
 
-public enum GameType { MapGenPaintedRegions, MapGenBiomeColors, OrganicGrowth, ManualBiome, ExodusBiomeFromNoise, ExodusBiomeFromClusters}
+public enum GameType { ExodusGame, MapGenPaintedRegions, MapGenBiomeColors, OrganicGrowth, ManualBiome, ExodusBiomeFromNoise, ExodusBiomeFromClusters}
 
 
 
