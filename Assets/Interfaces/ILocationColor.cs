@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface ILocationColor 
 {
-
+    Color GetColor(ILocation location);
 }

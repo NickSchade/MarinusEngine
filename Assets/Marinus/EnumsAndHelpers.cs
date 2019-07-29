@@ -2,7 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum GameType { ExodusGame, MapGenPaintedRegions, MapGenBiomeColors, OrganicGrowth, ManualBiome, ExodusBiomeFromNoise, ExodusBiomeFromClusters }
+public enum GameType { ExodusGame, MapGenBiomeColors, OrganicGrowth,
+                        ExodusBiomeFromNoise, ExodusBiomeFromClusters, ExodusBiomeFromPainted,
+                        ExodusBiomeFromBasicWaterTemp, ExodusBiomeFromAdvancedWaterTemp,
+    ExodusBiomeFromAutomaticWaterTemp, ExodusBiomeFromAutomaticWaterTempLongLat
+}
 
 public enum TileShape { SQUARE, HEX };
 

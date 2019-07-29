@@ -2,133 +2,65 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BiomeInitialization { Noise, Clustering, Painting, BasicWaterTemp, AdvancedWaterTemp, AutomaticWaterTemp, AutomaticWaterTempLongLat };
 
 public static class LocationsMaker
 {
-    public static Dictionary<Pos, ILocation> MakeLocations(IGame game, GameType gameType, float percentSea, float percentRiver, float numCats = 3f)
+    public static Dictionary<Pos, ILocation> MakeLocations(IGame game, GameType gameType, MapGen mapGen, float numCats = 3f)
     {
         if (gameType == GameType.OrganicGrowth)
         {
-            return MakeLocationsForOrganicGrowth(game, percentSea, percentRiver);
-        }
-        else if (gameType == GameType.MapGenPaintedRegions)
-        {
-            return MakeLocationsForMapGenPaintedRegions(game.map, percentSea, percentRiver);
+            return MakeLocationsForOrganicGrowth(game, mapGen);
         }
         else if (gameType == GameType.MapGenBiomeColors)
         {
-            return MakeLocationsForMapGenBiomeColors(game.map, percentSea, percentRiver);
-        }
-        else if (gameType == GameType.ManualBiome)
-        {
-            return MakeLocationsForBiomeFromManual(game.map, percentSea, percentRiver, numCats);
+            return MakeLocationsForMapGenBiomeColors(game.map, mapGen);
         }
         else if (gameType == GameType.ExodusBiomeFromNoise)
         {
-            return MakeLocationsForExodusFromMethod(BiomeInitialization.Noise, (ExodusGame)game, percentSea, percentRiver, (int)numCats);
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.Noise, (ExodusGame)game, mapGen, (int)numCats);
         }
         else if (gameType == GameType.ExodusBiomeFromClusters)
         {
-            return MakeLocationsForExodusFromMethod(BiomeInitialization.Clustering, (ExodusGame)game, percentSea, percentRiver, (int)numCats);
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.Clustering, (ExodusGame)game, mapGen, (int)numCats);
+        }
+        else if (gameType == GameType.ExodusBiomeFromPainted)
+        {
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.Painting, (ExodusGame)game, mapGen, (int)numCats);
+        }
+        else if (gameType == GameType.ExodusBiomeFromBasicWaterTemp)
+        {
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.BasicWaterTemp, (ExodusGame)game, mapGen, (int)numCats);
+        }
+        else if (gameType == GameType.ExodusBiomeFromAdvancedWaterTemp)
+        {
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.AdvancedWaterTemp, (ExodusGame)game, mapGen, (int)numCats);
+        }
+        else if (gameType == GameType.ExodusBiomeFromAutomaticWaterTemp)
+        {
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.AutomaticWaterTemp, (ExodusGame)game, mapGen, (int)numCats);
+        }
+        else if (gameType == GameType.ExodusBiomeFromAutomaticWaterTempLongLat)
+        {
+            return MakeLocationsForExodusFromMethod(BiomeInitialization.AutomaticWaterTempLongLat, (ExodusGame)game, mapGen, (int)numCats);
         }
         else if (gameType == GameType.ExodusGame)
         {
-            return MakeLocationsForExodus((ExodusGame)game, percentSea, percentRiver, (int)numCats);
+            return MakeLocationsForExodus((ExodusGame)game, mapGen, (int)numCats);
         }
         else
         {
             throw new System.Exception("GameType not implemented in LocationMaker");
         }
     }
-    public static Dictionary<Pos, ILocation> MakeLocationsForBiomeFromManual(IMap map, float percentSea, float percentRiver, float numCats)
-    {
-        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
 
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
 
-        Color[] colorList = Colors.ColorListProcedural(2000);
-        for (int x = 0; x < map.xDim; x++)
-        {
-            for (int y = 0; y < map.yDim; y++)
-            {
-                Pos p = map.pathMap[new Loc(x, y).key()];
-                locations[p] = new LocationManualBiome(p, mapGen.GetLocationQualities(x, y), colorList, numCats);
-            }
-        }
-
-        return locations;
-    }
-    public enum BiomeInitialization { Noise, Clustering, Painting, Manual};
-    public static float[][,] GetBiomesFromMethod(IMap map, MapGen mapGen, int numCats, BiomeInitialization biomeInit)
-    {
-        float[][,] biomes = new float[numCats][,];
-        switch (biomeInit)
-        {
-            case BiomeInitialization.Clustering:
-                biomes = GetBiomesFromClustering(map, mapGen, numCats);
-                break;
-            case BiomeInitialization.Noise:
-                biomes = GetBiomesFromNoise(map, mapGen, numCats);
-                break;
-        }
-        return biomes;
-    }
-    public static float[][,] GetBiomesFromClustering(IMap map, MapGen mapGen, int numCats)
-    {
-        Clustering km = new Clustering();
-        int[,] biomeClusters = km.ClusterMap(mapGen, numCats);
-
-        float[][,] biomes = new float[numCats][,];
-        for (int i = 0; i < numCats; i++)
-        {
-            biomes[i] = new float[map.xDim, map.yDim]; ;
-        }
-
-        for (int x = 0; x < map.xDim; x++)
-        {
-            for (int y = 0; y < map.yDim; y++)
-            {
-                bool isAboveSeaLevel = mapGen.Elevation[x, y] > mapGen.seaLevel;
-                if (isAboveSeaLevel)
-                {
-                    int ibiomeHere = biomeClusters[x, y];
-                    biomes[ibiomeHere][x, y] = 1f;
-                }
-            }
-        }
-
-        return biomes;
-    }
-    public static float[][,] GetBiomesFromNoise(IMap map, MapGen mapGen, int numCats)
-    {
-        float[][,] biomes = new float[numCats][,];
-
-        for (int iCat = 0; iCat < numCats; iCat++)
-        {
-            ElevationBuilder elevationBuilder = new ElevationBuilder(MapUtil.nFromDims(map.xDim, map.yDim));
-            elevationBuilder.SetElevationWithMidpointDisplacement(1);
-            biomes[iCat] = elevationBuilder.Elevation;
-            for (int x = 0; x < map.xDim; x++)
-            {
-                for (int y = 0; y < map.yDim; y++)
-                {
-                    bool isAboveSeaLevel = mapGen.Elevation[x, y] > mapGen.seaLevel;
-                    biomes[iCat][x, y] = isAboveSeaLevel ? biomes[iCat][x, y] : 0f;
-                }
-            }
-        }
-        return biomes;
-    }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodusFromMethod(BiomeInitialization biomeInit, ExodusGame game, float percentSea, float percentRiver, int numCats)
+    public static Dictionary<Pos, ILocation> MakeLocationsForExodusFromMethod(BiomeInitialization biomeInit, ExodusGame game, MapGen mapGen, int numCats)
     {
         IMap map = game.map;
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
 
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
-
-        float[][,] biomes = GetBiomesFromMethod(map, mapGen, numCats, biomeInit);
+        float[][,] biomes = ExodusBiomeInitializer.GetBiomesFromMethod(map, mapGen, numCats, biomeInit);
 
         Color[] colorList = Colors.ColorListProcedural(2000);
         for (int x = 0; x < map.xDim; x++)
@@ -148,69 +80,10 @@ public static class LocationsMaker
 
         return locations;
     }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromNoise(ExodusGame game, float percentSea, float percentRiver, int numCats)
+    public static Dictionary<Pos, ILocation> MakeLocationsForExodus(ExodusGame game, MapGen mapGen, int numCats, float cutoff = 0.9f)
     {
         IMap map = game.map;
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
-
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
-
-        float[][,] biomes = GetBiomesFromNoise(map, mapGen, numCats);
-        
-        Color[] colorList = Colors.ColorListProcedural(2000);
-        for (int x = 0; x < map.xDim; x++)
-        {
-            for (int y = 0; y < map.yDim; y++)
-            {
-                Pos p = map.pathMap[new Loc(x, y).key()];
-                float[] thisBiomes = new float[numCats];
-                for (int iCat = 0; iCat < numCats; iCat++)
-                {
-                    thisBiomes[iCat] = biomes[iCat][x, y];
-                }
-                Dictionary<string, float> qualities = mapGen.GetLocationQualities(x, y);
-                locations[p] = new ExodusLocation(p, thisBiomes, game, qualities);
-            }
-        }
-
-        return locations;
-    }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodusBiomeFromClustering(ExodusGame game, float percentSea, float percentRiver, int numCats, float cutoff = 0.9f)
-    {
-        IMap map = game.map;
-        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
-
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
-
-        float[][,] biomes = GetBiomesFromClustering(map, mapGen, numCats);
-
-        for (int x = 0; x < map.xDim; x++)
-        {
-            for (int y = 0; y < map.yDim; y++)
-            {
-                Pos p = map.pathMap[new Loc(x, y).key()];
-                float[] thisBiomes = new float[numCats];
-                for (int iCat = 0; iCat < numCats; iCat++)
-                {
-                    thisBiomes[iCat] = biomes[iCat][x, y];
-                }
-                Dictionary<string, float> qualities = mapGen.GetLocationQualities(x, y);
-                locations[p] = new ExodusLocation(p, thisBiomes, game, qualities);
-
-            }
-        }
-
-        return locations;
-    }
-    public static Dictionary<Pos, ILocation> MakeLocationsForExodus(ExodusGame game, float percentSea, float percentRiver, int numCats, float cutoff = 0.9f)
-    {
-        IMap map = game.map;
-        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
-
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
 
         for (int x = 0; x < map.xDim; x++)
         {
@@ -225,32 +98,9 @@ public static class LocationsMaker
         return locations;
     }
 
-
-
-    public static Dictionary<Pos, ILocation> MakeLocationsForMapGenPaintedRegions(IMap map, float percentSea, float percentRiver)
+    public static Dictionary<Pos, ILocation> MakeLocationsForMapGenBiomeColors(IMap map, MapGen mapGen)
     {
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
-
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
-        mapGen.PaintRegions();
-        for (int x = 0; x < map.xDim; x++)
-        {
-            for (int y = 0; y < map.yDim; y++)
-            {
-                Pos p = map.pathMap[new Loc(x, y).key()];
-                locations[p] = new LocationMapGenPainted(mapGen.GetLocationQualities(x, y));
-            }
-        }
-
-        return locations;
-    }
-    public static Dictionary<Pos, ILocation> MakeLocationsForMapGenBiomeColors(IMap map, float percentSea, float percentRiver)
-    {
-        Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
-
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
 
         for (int x = 0; x < map.xDim; x++)
         {
@@ -279,7 +129,7 @@ public static class LocationsMaker
         return c;
 
     }
-    public static Dictionary<Pos, ILocation> MakeLocationsForOrganicGrowth(IGame game, float percentSea, float percentRiver, float pow = 2f)
+    public static Dictionary<Pos, ILocation> MakeLocationsForOrganicGrowth(IGame game, MapGen mapGen, float pow = 2f)
     {
         IMap map = game.map;
         Dictionary<Pos, ILocation> locations = new Dictionary<Pos, ILocation>();
@@ -290,8 +140,6 @@ public static class LocationsMaker
 
         float[,] resources = elevationBuilder.Elevation;
         MapUtil.TransformMap(ref resources, MapUtil.dExponentiate, pow);
-        MapGen mapGen = new MapGen(map.xDim, map.yDim, _percentSea: percentSea, _percentRiver: percentRiver);
-        mapGen.GenerateMap();
         for (int x = 0; x < map.xDim; x++)
         {
             for (int y = 0; y < map.yDim; y++)

@@ -6,6 +6,7 @@ using UnityEngine;
 public class MarinusMap : IMap
 {
     public IGame game;
+    public MapGen _mapGen { get; set; }
     public Dictionary<string, Pos> pathMap { get; set; }
     public Dictionary<Pos, ILocation> lands { get; set; }
     public Dictionary<Pos, IStructure> settlements { get; set; }
@@ -28,7 +29,9 @@ public class MarinusMap : IMap
     }
     protected virtual void MakeLands()
     {
-        lands = LocationsMaker.MakeLocations(game, gameType, percentSea, percentRiver, ExodusSettings.numberOfBiomes);
+        _mapGen = new MapGen(xDim, yDim, _percentSea: percentSea, _percentRiver: percentRiver);
+        _mapGen.GenerateMap();
+        lands = LocationsMaker.MakeLocations(game, gameType, _mapGen, ExodusSettings.numberOfBiomes);
     }
     protected void InitializeVars(IGame _game, int _xDim, int _yDim, bool _wrapEastWest, bool _wrapNorthSouth, float _percentSea, float _percentRiver)
     {

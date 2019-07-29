@@ -23,9 +23,13 @@ public class MarinusGame: IGame
     protected float percentSea = 0.5f;
     protected float percentRiver = 0.20f;
     
-    public MarinusGame(GameManager _gameManager)
+    public MarinusGame()
     {
-        Initialize(_gameManager);
+
+    }
+    public MarinusGame(GameManager gameManager)
+    {
+        Initialize(gameManager);
         map = new MarinusMap(this, gameManager.gameType, dim, dim, wrapEastWest, wrapNorthSouth, percentSea, percentRiver);
     }
     public void Initialize(GameManager _gameManager)

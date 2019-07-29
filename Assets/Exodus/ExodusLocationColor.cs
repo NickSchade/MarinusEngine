@@ -5,16 +5,20 @@ using UnityEngine;
 public enum ExodusLocationColorType { DiscreteSingle, DiscreteMulti, ContinuousSingle, ContinuousMulti };
 public class ExodusLocationColor : ILocationColor
 {
-    IGame _game;
-    public ExodusLocationColor(IGame game)
+    ExodusBiomeSystem _biomeSystem;
+    public ExodusLocationColor(ExodusBiomeSystem biomeSystem)
     {
-        _game = game;
+        _biomeSystem = biomeSystem;
     }
     public Color GetColor(ExodusLocation exodusLocation)
     {
         Color c = SetDefaultColor(exodusLocation);
-        c = _game._biomeSystem.GetColorFromType(exodusLocation, c, _game._biomeSystem._currentColorType);
+        c = _biomeSystem.GetColor(exodusLocation, c);
         return c;
+    }
+    public Color GetColor(ILocation location)
+    {
+        return Color.black;
     }
     private Color SetDefaultColor(ExodusLocation location)
     {
