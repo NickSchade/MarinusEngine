@@ -1,13 +1,15 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class ExodusLocation : ILocation
 {
-    Pos _p;
-    float[] _biomes;
-    Dictionary<string, float> _qualities;
+    public Pos _p;
+    public float[] _biomes;
+    public Dictionary<string, float> _qualities;
     ExodusGame _game;
+
     public ExodusLocation(Pos p, float[] biomes, ExodusGame game, Dictionary<string, float> qualities)
     {
         _p = p;
@@ -16,81 +18,33 @@ public class ExodusLocation : ILocation
         _qualities = qualities;
         mDebug.Log("MakingExodusLocation", false);
     }
+    public int GetMaxBiome()
+    {
+        float maxBiomeVal = float.NegativeInfinity;
+        int maxBiomeIndex = 0;
+        for (int i = 0; i < _biomes.Length; i++)
+        {
+            float biome = _biomes[i];
+            if (biome > maxBiomeVal)
+            {
+                maxBiomeVal = biome;
+                maxBiomeIndex = i;
+            }
+        }
+        return maxBiomeIndex;
+    }
 
     public void Click()
     {
         Describe(true);
+        
     }
-
+    
     public Color GetColor()
     {
-        Color c = Color.magenta;
-        if (_qualities["Land"] == 0f)
-        {
-            c = Color.black;
-        }
-        else
-        {
-            c = Color.white;
-            //c = GetColorDiscreteSingleBiome(c);
-            //c = GetColorContinuousSingleBiome(c);
-            //c = GetColorDiscreteManyBiome(c);
-            //c = GetColorContinuousManyBiome(c);
-        }
-        return c;
+        return _game._colorLocation.GetColor(this);
     }
-
-    private Color GetColorDiscreteSingleBiome(Color currentColor)
-    {
-        int biomeIndex = _game.activeBiomes[0];
-        if (_biomes[biomeIndex] > ExodusSettings.biomeCutoffDiscrete)
-        {
-            currentColor = _game.biomeColors[biomeIndex];
-        }
-
-        return currentColor;
-    }
-
-    private Color GetColorDiscreteManyBiome(Color currentColor)
-    {
-        for (int i = 0; i < _game.activeBiomes.Count; i++)
-        {
-            int biomeIndex = _game.activeBiomes[i];
-            if (_biomes[biomeIndex] > ExodusSettings.biomeCutoffDiscrete)
-            {
-                currentColor = _game.biomeColors[biomeIndex];
-                mDebug.Log(_p.getName() + "is" + currentColor);
-            }
-        }
-        return currentColor;
-    }
-
-    private Color GetColorContinuousSingleBiome(Color currentColor)
-    {
-        int biomeIndex = _game.activeBiomes[0];
-        if (_biomes[biomeIndex] > ExodusSettings.biomeCutoffContinuous)
-        {
-            Color pureColor = _game.biomeColors[biomeIndex];
-            currentColor = MapColor.GetColorLerp(_biomes[biomeIndex], Color.white, pureColor);
-        }
-
-        return currentColor;
-    }
-
-    private Color GetColorContinuousManyBiome(Color currentColor)
-    {
-        for (int i = 0; i < _game.activeBiomes.Count; i++)
-        {
-            int biomeIndex = _game.activeBiomes[i];
-            if (_biomes[biomeIndex] > ExodusSettings.biomeCutoffContinuous)
-            {
-                Color pureColor = _game.biomeColors[biomeIndex];
-                currentColor = MapColor.GetColorLerp(_biomes[biomeIndex], Color.white, pureColor);
-            }
-        }
-
-        return currentColor;
-    }
+    
 
     public void TakeTurn()
     {
@@ -103,7 +57,9 @@ public class ExodusLocation : ILocation
         if (log)
         {
             Debug.Log("This is where the description goes");
+            Debug.Log("Biomes are " + string.Join(",", _biomes.Select(x=>x.ToString()).ToArray()));
             Debug.Log("Color is " + GetColor().ToString());
         }
     }
 }
+

@@ -2,16 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InputHandler : MonoBehaviour {
-
-    public IGame game;
-	
-    public bool HandleUserInput()
-    {
-        ScrollHandler.HandleScroll();
-        return HandleClick();
-    }
-    bool HandleClick()
+public static class ClickHandler
+{
+    public static bool HandleClick(IGame game)
     {
         bool updateClick = false;
 

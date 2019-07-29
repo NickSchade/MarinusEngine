@@ -81,7 +81,7 @@ public class Pos
     }
 
 
-    public void SetNeighbors(Map map, TileShape tileShape)
+    public void SetNeighbors(MarinusMap map, TileShape tileShape)
     {
         if (tileShape == TileShape.SQUARE)
         {
@@ -92,11 +92,11 @@ public class Pos
             SetNeighborsHex(map);
         }
     }
-    private void SetNeighborsSquare(Map map)
+    private void SetNeighborsSquare(MarinusMap map)
     {
         SetNeighborsSquare(map.pathMap, map.xDim, map.yDim, map.wrapEastWest, map.wrapNorthSouth);
     }
-    private void SetNeighborsHex(Map map)
+    private void SetNeighborsHex(MarinusMap map)
     {
         SetNeighborsHex(map.pathMap, map.xDim, map.yDim, map.wrapEastWest, map.wrapNorthSouth);
     }

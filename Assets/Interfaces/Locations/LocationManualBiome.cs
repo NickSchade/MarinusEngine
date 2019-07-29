@@ -2,14 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface ILocation
-{
-    Color GetColor();
-    void TakeTurn();
-    void Click();
-}
-
-
 public class LocationManualBiome : ILocation
 {
     public Dictionary<string, float> qualities;
@@ -29,9 +21,9 @@ public class LocationManualBiome : ILocation
 
     void SetColor(Color[] colorList)
     {
-        //SetColorManual1();
+        SetColorManual1();
         //SetColorManual2(colorList);
-        SetColorAutomatic1(colorList, _numCats);
+        //SetColorAutomatic1(colorList, Mathf.Round(_numCats/2));
         //SetColorAutomatic2(colorList, 2f);
 
     }
@@ -249,117 +241,4 @@ public class LocationManualBiome : ILocation
     {
         mDebug.Log("Color=" + color.ToString() + ";Temperature=" + qualities["Temperature"] + ";Rain=" + qualities["Rain"] + ";WaterFlux=" + qualities["WaterFlux"]);
     }
-}
-
-public class LocationOrganicGrowth : ILocation
-{
-    float resourceValue;
-    bool isLand;
-    float maxResource = 1f;
-    float resourcePerTurn = 0.0001f;
-    float resourcePow = 0.99f;//0.9999f;//0.99999f;
-    bool isVisible = true;
-    IGame game;
-    public LocationOrganicGrowth(IGame _game, bool _isLand, float _startingResourceValue)
-    {
-        game = _game;
-        isLand = _isLand;
-        resourceValue = _startingResourceValue;
-    }
-    public void TakeTurn()
-    {
-        if (resourceValue < maxResource)
-        {
-            //resourceValue += resourcePerTurn;
-            resourceValue = Mathf.Pow(resourceValue, resourcePow);
-        }
-        else if (resourceValue > maxResource)
-        {
-            resourceValue = maxResource;
-        }
-    }
-    public Color GetColor()
-    {
-        if (isVisible)
-        {
-            if (isLand)
-            {
-                return Colors.OceanBlue;
-            }
-            else
-            {
-                mDebug.Log("resourceValue = " + resourceValue, false);
-                //float x = Mathf.Round(resourceValue * 10) / 10f;
-                float x = resourceValue;
-                return Colors.GetColorLerp(x / maxResource, Color.white, Color.black);
-            }
-        }
-        else
-        {
-            return Color.black;
-        }
-    }
-
-    public void Click()
-    {
-        isVisible = !isVisible;
-    }
-}
-
-public abstract class LocationMapGen : ILocation
-{
-    public abstract Color GetColor();
-    public void TakeTurn()
-    {
-
-    }
-    public void Click()
-    {
-
-    }
-}
-
-public class LocationMapGenPainted : LocationMapGen, ILocation
-{
-    public Dictionary<string, float> qualities;
-    public LocationMapGenPainted(Dictionary<string, float> _qualities)
-    {
-        qualities = _qualities;
-    }
-    public override Color GetColor()
-    {
-        string Category = "Regions";
-        float value = qualities[Category];
-        Color c = Colors.GetColorLerp(value, Color.blue, Color.green);
-        if (Category == "Regions")
-        {
-            if (value == 0f)
-            {
-                c = Colors.DarkBlue;
-            }
-            else
-            {
-                c = Colors.staticColors[(int)value];
-            }
-        }
-        mDebug.Log(Category + " value is " + value + " and color is " + c);
-        return c;
-
-    }
-
-}
-
-public class LocationMapGenBiomeColor : LocationMapGen, ILocation
-{
-    Color color;
-    public LocationMapGenBiomeColor(Color c)
-    {
-        color = c;
-    }
-    public override Color GetColor()
-    {
-        return color;
-
-    }
-
 }

@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
         //game = new Game(this);
         game = new ExodusGame(this);
         drawer.game = game;
-        inputHandler.game = game;
+        inputHandler.SetGame(game);
     }
 
    

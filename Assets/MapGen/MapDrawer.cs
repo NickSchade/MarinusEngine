@@ -37,6 +37,10 @@ public class MapDrawer : MonoBehaviour
     void Update()
     {
         ScrollHandler.HandleScroll();
+        if (mapGen != null)
+        {
+            DisplayMap(displayView);
+        }
     }
 
     // BUTTON FUNCTIONS - DISPLAY
